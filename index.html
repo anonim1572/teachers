@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galeria Nauczycieli</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Main View: Teachers List -->
+        <div id="main-view" class="view active">
+            <header class="header">
+                <h1>👨‍🏫 Galeria Nauczycieli</h1>
+                <p class="subtitle">Zarządzaj profilami i zdjęciami nauczycieli</p>
+            </header>
+
+            <div class="add-teacher-section">
+                <button class="admin-login-btn" onclick="app.showAdminLogin()" id="admin-login-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    Zaloguj jako Admin
+                </button>
+                <button class="add-teacher-btn" onclick="app.showAddTeacherModal()" id="add-teacher-btn"
+                    style="display:none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    Dodaj Nauczyciela
+                </button>
+                <button class="admin-logout-btn" onclick="app.logoutAdmin()" id="admin-logout-btn"
+                    style="display:none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Wyloguj
+                </button>
+            </div>
+
+            <!-- Recently Added Section -->
+            <div class="recently-added-section">
+                <h3>📸 Ostatnio dodane</h3>
+                <div class="recently-added-grid" id="recently-added-grid">
+                    <!-- Recently added media will be shown here -->
+                </div>
+            </div>
+
+            <div class="people-grid" id="people-grid">
+                <!-- Teacher cards will be generated here -->
+            </div>
+
+            <div class="empty-state" id="main-empty-state">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <p>Brak nauczycieli</p>
+                <p class="empty-hint">Dodaj pierwszego nauczyciela, aby rozpocząć</p>
+            </div>
+        </div>
+
+        <!-- Detail View: Teacher's Profile -->
+        <div id="detail-view" class="view">
+            <div class="detail-header">
+                <button class="back-button" onclick="app.showMainView()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                    Powrót
+                </button>
+                <div class="teacher-info">
+                    <h2 id="person-name">Imię i Nazwisko</h2>
+                    <p id="person-description" class="teacher-description"></p>
+                </div>
+                <button class="delete-teacher-btn" onclick="app.deleteTeacher()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                    Usuń Nauczyciela
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="natural" onclick="app.switchTab('natural')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M21 15l-5-5L5 21" />
+                    </svg>
+                    Natural
+                </button>
+                <button class="tab-btn" data-tab="ai" onclick="app.switchTab('ai')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                        <line x1="12" y1="22.08" x2="12" y2="12" />
+                    </svg>
+                    AI
+                </button>
+                <button class="tab-btn" data-tab="quotes" onclick="app.switchTab('quotes')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z" />
+                        <path
+                            d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z" />
+                    </svg>
+                    Cytaty
+                </button>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <div class="upload-area" id="upload-area">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                    </svg>
+                    <p>Kliknij lub przeciągnij pliki</p>
+                    <p class="upload-hint">Zdjęcia i wideo (max 50MB)</p>
+                    <input type="file" id="file-input" accept="image/*,video/*" multiple>
+                </div>
+            </div>
+
+            <!-- Media Grid -->
+            <div class="images-section">
+                <h3 class="section-title">Galeria <span id="current-tab-name">AI</span></h3>
+                <div class="images-grid" id="images-grid">
+                    <!-- Media will be displayed here -->
+                </div>
+                <div class="empty-state" id="empty-state">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M21 15l-5-5L5 21" />
+                    </svg>
+                    <p>Brak plików</p>
+                    <p class="empty-hint">Dodaj pierwsze zdjęcie lub wideo</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Teacher Modal -->
+        <div id="add-teacher-modal" class="modal">
+            <div class="modal-content modal-form">
+                <button class="modal-close" onclick="app.closeAddTeacherModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+                <h2>Dodaj Nauczyciela</h2>
+                <form id="add-teacher-form" onsubmit="app.addTeacher(event)">
+                    <div class="form-group">
+                        <label for="teacher-firstname">Imię *</label>
+                        <input type="text" id="teacher-firstname" required placeholder="np. Jan">
+                    </div>
+                    <div class="form-group">
+                        <label for="teacher-lastname">Nazwisko *</label>
+                        <input type="text" id="teacher-lastname" required placeholder="np. Kowalski">
+                    </div>
+                    <div class="form-group">
+                        <label for="teacher-description">Opis (opcjonalnie)</label>
+                        <textarea id="teacher-description" rows="3" placeholder="np. Matematyka, klasy 1-3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="teacher-photo">Zdjęcie profilowe (opcjonalnie)</label>
+                        <input type="file" id="teacher-photo" accept="image/*">
+                        <div id="photo-preview" class="photo-preview"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="app.closeAddTeacherModal()">Anuluj</button>
+                        <button type="submit" class="btn-primary">Dodaj</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Media Modal -->
+        <div id="image-modal" class="modal">
+            <div class="modal-content">
+                <button class="modal-close" onclick="app.closeModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+                <div id="modal-media-container">
+                    <img id="modal-image" src="" alt="Pełny rozmiar" style="display:none;">
+                    <video id="modal-video" controls style="display:none;"></video>
+                </div>
+                <div class="modal-actions">
+                    <button class="nav-button" onclick="app.prevMedia()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                    </button>
+                    <button class="delete-button" id="delete-media-btn" onclick="app.deleteCurrentMedia()"
+                        style="display:none;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                        Usuń
+                    </button>
+                    <button class="nav-button" onclick="app.nextMedia()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 18l6-6-6-6" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Login Modal -->
+        <div id="admin-login-modal" class="modal">
+            <div class="modal-content modal-form">
+                <button class="modal-close" onclick="app.closeAdminLogin()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+                <h2>🔐 Logowanie Administratora</h2>
+                <form id="admin-login-form" onsubmit="app.loginAdmin(event)">
+                    <div class="form-group">
+                        <label for="admin-password">Hasło administratora</label>
+                        <input type="password" id="admin-password" required placeholder="Wprowadź hasło">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="app.closeAdminLogin()">Anuluj</button>
+                        <button type="submit" class="btn-primary">Zaloguj</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Quote Modal -->
+        <div id="add-quote-modal" class="modal">
+            <div class="modal-content modal-form">
+                <button class="modal-close" onclick="app.closeAddQuoteModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+                <h2>Dodaj Cytat</h2>
+                <form id="add-quote-form" onsubmit="app.addQuote(event)">
+                    <div class="form-group">
+                        <label for="quote-text">Cytat *</label>
+                        <textarea id="quote-text" rows="4" required placeholder="Wprowadź cytat..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="quote-author">Autor (opcjonalnie)</label>
+                        <input type="text" id="quote-author" placeholder="np. nauczyciel lub uczeń">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="app.closeAddQuoteModal()">Anuluj</button>
+                        <button type="submit" class="btn-primary">Dodaj</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <p>Ładowanie...</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
