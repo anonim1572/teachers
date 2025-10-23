@@ -11,6 +11,7 @@ const app = {
   currentTab: "natural", // 'natural', 'ai', or 'quotes'
   currentMediaIndex: null,
   isAdmin: false,
+  supabase: null,
 
   async init() {
     // Check if admin is logged in
@@ -29,15 +30,20 @@ const app = {
     this.updateAdminUI();
 
     // Initialize Supabase
-    if (typeof window.SUPABASE_CONFIG !== "undefined") {
-      const { createClient } = supabase;
+    if (
+      typeof window.SUPABASE_CONFIG !== "undefined" &&
+      typeof window.supabase !== "undefined"
+    ) {
+      const { createClient } = window.supabase;
       supabase = createClient(
         window.SUPABASE_CONFIG.url,
         window.SUPABASE_CONFIG.anonKey
       );
+      this.supabase = supabase;
+      console.log("✅ Supabase initialized successfully");
       await this.loadTeachersFromSupabase();
     } else {
-      console.warn("Supabase not configured. Using localStorage fallback.");
+      console.warn("⚠️ Supabase not configured. Using localStorage fallback.");
       this.loadFromLocalStorage();
     }
 
@@ -49,7 +55,11 @@ const app = {
   // ===== SUPABASE METHODS =====
   async loadTeachersFromSupabase() {
     try {
-      const { data, error } = await supabase
+      if (!this.supabase) {
+        console.warn("Supabase not initialized");
+        return;
+      }
+      const { data, error } = await this.supabase
         .from("teachers")
         .select("*")
         .order("created_at", { ascending: false });
@@ -64,7 +74,11 @@ const app = {
 
   async saveTeacherToSupabase(teacher) {
     try {
-      const { data, error } = await supabase
+      if (!this.supabase) {
+        console.warn("Supabase not initialized");
+        return null;
+      }
+      const { data, error } = await this.supabase
         .from("teachers")
         .insert([
           {
@@ -86,8 +100,12 @@ const app = {
 
   async deleteTeacherFromSupabase(teacherId) {
     try {
+      if (!this.supabase) {
+        console.warn("Supabase not initialized");
+        return;
+      }
       // Delete all media first
-      const { error: mediaError } = await supabase
+      const { error: mediaError } = await this.supabase
         .from("media")
         .delete()
         .eq("teacher_id", teacherId);
@@ -95,7 +113,7 @@ const app = {
       if (mediaError) throw mediaError;
 
       // Then delete teacher
-      const { error } = await supabase
+      const { error } = await this.supabase
         .from("teachers")
         .delete()
         .eq("id", teacherId);
@@ -109,23 +127,28 @@ const app = {
 
   async uploadMediaToSupabase(teacherId, file, category) {
     try {
+      if (!this.supabase) {
+        console.warn("Supabase not initialized");
+        return null;
+      }
       this.showLoading();
 
       // Upload file to Supabase Storage
       const fileName = `${teacherId}/${category}/${Date.now()}_${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("teacher-media")
-        .upload(fileName, file);
+      const { data: uploadData, error: uploadError } =
+        await this.supabase.storage
+          .from("teacher-media")
+          .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
       // Get public URL
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = this.supabase.storage
         .from("teacher-media")
         .getPublicUrl(fileName);
 
       // Save metadata to database
-      const { data, error } = await supabase
+      const { data, error } = await this.supabase
         .from("media")
         .insert([
           {
@@ -152,7 +175,11 @@ const app = {
 
   async loadMediaFromSupabase(teacherId, category) {
     try {
-      const { data, error } = await supabase
+      if (!this.supabase) {
+        console.warn("Supabase not initialized");
+        return [];
+      }
+      const { data, error } = await this.supabase
         .from("media")
         .select("*")
         .eq("teacher_id", teacherId)
@@ -169,17 +196,24 @@ const app = {
 
   async deleteMediaFromSupabase(mediaId, filePath) {
     try {
+      if (!this.supabase) {
+        console.warn("Supabase not initialized");
+        return;
+      }
       this.showLoading();
 
       // Delete from storage
-      const { error: storageError } = await supabase.storage
+      const { error: storageError } = await this.supabase.storage
         .from("teacher-media")
         .remove([filePath]);
 
       if (storageError) throw storageError;
 
       // Delete from database
-      const { error } = await supabase.from("media").delete().eq("id", mediaId);
+      const { error } = await this.supabase
+        .from("media")
+        .delete()
+        .eq("id", mediaId);
 
       if (error) throw error;
 
@@ -286,7 +320,7 @@ const app = {
 
     let allMedia = [];
 
-    if (supabase) {
+    if (this.supabase) {
       try {
         const { data, error } = await supabase
           .from("media")
@@ -503,7 +537,7 @@ const app = {
 
     let mediaItems = [];
 
-    if (supabase) {
+    if (this.supabase) {
       mediaItems = await this.loadMediaFromSupabase(
         this.currentTeacherId,
         this.currentTab
@@ -603,15 +637,15 @@ const app = {
 
       // Upload photo if provided
       if (photoFile) {
-        if (supabase) {
+        if (this.supabase) {
           const fileName = `profiles/${Date.now()}_${photoFile.name}`;
-          const { error: uploadError } = await supabase.storage
+          const { error: uploadError } = await this.supabase.storage
             .from("teacher-media")
             .upload(fileName, photoFile);
 
           if (uploadError) throw uploadError;
 
-          const { data: urlData } = supabase.storage
+          const { data: urlData } = this.supabase.storage
             .from("teacher-media")
             .getPublicUrl(fileName);
 
@@ -626,7 +660,7 @@ const app = {
         }
       }
 
-      if (supabase) {
+      if (this.supabase) {
         const newTeacher = await this.saveTeacherToSupabase({
           firstName,
           lastName,
@@ -704,7 +738,7 @@ const app = {
     try {
       this.showLoading();
 
-      if (supabase) {
+      if (this.supabase) {
         // Update w Supabase
         const { error } = await supabase
           .from("teachers")
@@ -723,7 +757,7 @@ const app = {
         (t) => t.id === this.currentTeacherId
       );
       if (teacherIndex !== -1) {
-        if (supabase) {
+        if (this.supabase) {
           this.teachers[teacherIndex].first_name = firstName;
           this.teachers[teacherIndex].last_name = lastName;
           this.teachers[teacherIndex].description = description;
@@ -777,7 +811,7 @@ const app = {
     try {
       this.showLoading();
 
-      if (supabase) {
+      if (this.supabase) {
         await this.deleteTeacherFromSupabase(this.currentTeacherId);
       }
 
@@ -832,7 +866,7 @@ const app = {
     const container = document.getElementById("quotes-container");
     let quotes = [];
 
-    if (supabase) {
+    if (this.supabase) {
       try {
         const { data, error } = await supabase
           .from("quotes")
@@ -903,8 +937,8 @@ const app = {
     try {
       this.showLoading();
 
-      if (supabase) {
-        const { error } = await supabase.from("quotes").insert([
+      if (this.supabase) {
+        const { error } = await this.supabase.from("quotes").insert([
           {
             teacher_id: this.currentTeacherId,
             quote_text: text,
@@ -943,7 +977,7 @@ const app = {
     try {
       this.showLoading();
 
-      if (supabase) {
+      if (this.supabase) {
         const { error } = await supabase
           .from("quotes")
           .delete()
@@ -1045,7 +1079,7 @@ const app = {
       }
 
       try {
-        if (supabase) {
+        if (this.supabase) {
           await this.uploadMediaToSupabase(
             this.currentTeacherId,
             file,
@@ -1079,7 +1113,7 @@ const app = {
       }
     }
 
-    if (supabase) {
+    if (this.supabase) {
       await this.renderMedia();
     }
 
@@ -1209,7 +1243,7 @@ const app = {
     try {
       const media = this.currentMediaItems[this.currentMediaIndex];
 
-      if (supabase) {
+      if (this.supabase) {
         await this.deleteMediaFromSupabase(media.id, media.file_path);
       } else {
         const teacher = this.teachers.find(
