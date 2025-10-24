@@ -10,6 +10,8 @@ const app = {
   isLoggedIn: false,
   currentUser: null,
   searchQuery: "",
+  searchTimeout: null,
+  isRendering: false,
 
   async init() {
     if (
@@ -195,9 +197,16 @@ const app = {
   setupSearch() {
     const searchInput = document.getElementById("search-input");
     if (searchInput) {
-      searchInput.addEventListener("input", (e) => {
+      const oldClone = searchInput.cloneNode(true);
+      searchInput.parentNode.replaceChild(oldClone, searchInput);
+
+      oldClone.addEventListener("input", (e) => {
         this.searchQuery = e.target.value.toLowerCase().trim();
-        this.renderTeachersGrid();
+
+        clearTimeout(this.searchTimeout);
+        this.searchTimeout = setTimeout(() => {
+          this.renderTeachersGrid();
+        }, 150);
       });
     }
   },
@@ -720,7 +729,10 @@ const app = {
     });
   },
 
-  renderTeachersGrid() {
+  async renderTeachersGrid() {
+    if (this.isRendering) return;
+    this.isRendering = true;
+
     const grid = document.getElementById("people-grid");
     const emptyState = document.getElementById("main-empty-state");
 
@@ -749,12 +761,13 @@ const app = {
           <p class="empty-hint">Dodaj pierwszego nauczyciela, aby rozpocząć</p>
         `;
       }
+      this.isRendering = false;
       return;
     }
 
     emptyState.style.display = "none";
 
-    filteredTeachers.forEach(async (teacher) => {
+    for (const teacher of filteredTeachers) {
       const card = document.createElement("div");
       card.className = "person-card";
       card.onclick = () => this.showTeacherDetail(teacher.id);
@@ -815,7 +828,9 @@ const app = {
       `;
 
       grid.appendChild(card);
-    });
+    }
+
+    this.isRendering = false;
   },
 
   async showTeacherDetail(teacherId) {
