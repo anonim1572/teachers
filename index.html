@@ -239,6 +239,11 @@
                         <textarea id="edit-teacher-description" rows="3"
                             placeholder="np. [#ff9900:Matematyka], klasy 1-3\nNauczyciel roku 2024"></textarea>
                     </div>
+                    <div class="form-group">
+                        <label for="edit-teacher-photo">Zmień zdjęcie profilowe (opcjonalnie)</label>
+                        <input type="file" id="edit-teacher-photo" accept="image/*">
+                        <div id="edit-photo-preview" class="photo-preview"></div>
+                    </div>
                     <div class="form-actions">
                         <button type="button" class="btn-secondary"
                             onclick="app.closeEditTeacherModal()">Anuluj</button>
