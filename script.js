@@ -373,6 +373,8 @@ const app = {
       .getElementById("edit-teacher-description")
       .value.trim()
       .replace(/\\n/g, "\n");
+    const photoInput = document.getElementById("edit-teacher-photo");
+    const photoFile = photoInput?.files?.[0];
 
     if (!firstName || !lastName) {
       this.showToast("Imię i nazwisko są wymagane!", "error");
@@ -382,14 +384,42 @@ const app = {
     this.showLoading();
 
     try {
+      let newPhotoUrl = null;
+
+      if (photoFile && this.supabase) {
+        const fileExt = photoFile.name.split(".").pop();
+        const fileName = `${Date.now()}_${Math.random()
+          .toString(36)
+          .substring(7)}.${fileExt}`;
+        const filePath = `teachers/${fileName}`;
+
+        const { error: uploadError } = await this.supabase.storage
+          .from("teacher-media")
+          .upload(filePath, photoFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = this.supabase.storage
+          .from("teacher-media")
+          .getPublicUrl(filePath);
+
+        newPhotoUrl = urlData.publicUrl;
+      }
+
       if (this.supabase) {
+        const updateData = {
+          first_name: firstName,
+          last_name: lastName,
+          description: description,
+        };
+
+        if (newPhotoUrl) {
+          updateData.photo_url = newPhotoUrl;
+        }
+
         const { error } = await this.supabase
           .from("teachers")
-          .update({
-            first_name: firstName,
-            last_name: lastName,
-            description: description,
-          })
+          .update(updateData)
           .eq("id", teacherId);
 
         if (error) throw error;
@@ -398,6 +428,7 @@ const app = {
           teacher.first_name = firstName;
           teacher.last_name = lastName;
           teacher.description = description;
+          if (newPhotoUrl) teacher.photo_url = newPhotoUrl;
         }
       } else {
         const teacher = this.teachers.find((t) => t.id === teacherId);
@@ -1292,6 +1323,36 @@ const app = {
     document.getElementById("edit-teacher-description").value =
       teacher.description || "";
 
+    const photoPreview = document.getElementById("edit-photo-preview");
+    const currentPhotoUrl = teacher.photo_url || teacher.photoUrl;
+
+    if (currentPhotoUrl) {
+      photoPreview.innerHTML = `
+        <img src="${currentPhotoUrl}" alt="Aktualne zdjęcie">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">Aktualne zdjęcie</p>
+      `;
+      photoPreview.style.display = "block";
+    } else {
+      photoPreview.style.display = "none";
+    }
+
+    const photoInput = document.getElementById("edit-teacher-photo");
+    photoInput.value = "";
+    photoInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          photoPreview.innerHTML = `
+            <img src="${ev.target.result}" alt="Nowe zdjęcie">
+            <p style="font-size: 0.85rem; color: var(--primary); margin-top: 0.5rem;">Nowe zdjęcie (zapisz aby zastosować)</p>
+          `;
+          photoPreview.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
     modal.classList.add("active");
     document.body.style.overflow = "hidden";
   },
@@ -1301,6 +1362,8 @@ const app = {
     modal.classList.remove("active");
     document.body.style.overflow = "auto";
     document.getElementById("edit-teacher-form").reset();
+    document.getElementById("edit-photo-preview").innerHTML = "";
+    document.getElementById("edit-photo-preview").style.display = "none";
     this.editingTeacherId = null;
   },
 
